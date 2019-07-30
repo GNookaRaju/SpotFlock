@@ -1,0 +1,16 @@
+PODS:
+  - Connectivity (3.0.2)
+
+DEPENDENCIES:
+  - Connectivity
+
+SPEC REPOS:
+  https://github.com/cocoapods/specs.git:
+    - Connectivity
+
+SPEC CHECKSUMS:
+  Connectivity: 689b231de1c5ba0eaec2fa2cf3a2076742783535
+
+PODFILE CHECKSUM: 4d20058c729f0f944ed6ade4deec623836e19291
+
+COCOAPODS: 1.5.3

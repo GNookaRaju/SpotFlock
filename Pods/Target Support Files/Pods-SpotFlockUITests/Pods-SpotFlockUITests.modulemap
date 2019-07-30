@@ -1,0 +1,6 @@
+framework module Pods_SpotFlockUITests {
+  umbrella header "Pods-SpotFlockUITests-umbrella.h"
+
+  export *
+  module * { export * }
+}
