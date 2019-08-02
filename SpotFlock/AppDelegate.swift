@@ -2,20 +2,30 @@
 //  AppDelegate.swift
 //  SpotFlock
 //
-//  Created by Nuviso Infore on 30/07/19.
+//  Created by SpotFlock on 30/07/19.
 //  Copyright © 2019 Spotflock. All rights reserved.
 //
 
 import UIKit
+import Connectivity
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
+    
+    fileprivate let connectivity: Connectivity = Connectivity()
+    var hideHudTimer: Timer?
+    var isShowingActivity: Bool! = false
+    var isNetworkEnable: Bool! = false
+
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        self.startHost()
+        self.startConnectivityChecks()
+        
         return true
     }
 
@@ -41,6 +51,79 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
 
+    // MARK: - ProgressBar
+    
+    func showProgressBar() {
+        if self.isShowingActivity == false {
+            DispatchQueue.global(qos: .background).async {
+                DispatchQueue.main.async {
+                    self.isShowingActivity = true
+                    if self.hideHudTimer?.isValid ?? false {
+                        self.hideHudTimer?.invalidate()
+                    }
+                    self.hideHudTimer = Timer.scheduledTimer(timeInterval: 20.0, target: self, selector: #selector(self.hideProgressBar), userInfo: nil, repeats: false)
+                    
+                    let window = UIApplication.shared.keyWindow!
+                    window.makeToastActivity()
+                }
+            }
+        }
+    }
+    
+    @objc func hideProgressBar() {
+        DispatchQueue.global(qos: .background).async {
+            DispatchQueue.main.async {
+                self.isShowingActivity = false
+                if self.hideHudTimer?.isValid ?? false {
+                    self.hideHudTimer?.invalidate()
+                }
+                let window = UIApplication.shared.keyWindow!
+                window.hideToastActivity()
+            }
+        }
+    }
+
+    
+    
+    // MARK: - Network Connectivity
+    
+    func startHost() {
+        connectivity.framework = .systemConfiguration
+        performSingleConnectivityCheck()
+        configureConnectivityNotifier()
+    }
+    
+    func configureConnectivityNotifier() {
+        let connectivityChanged: (Connectivity) -> Void = { [weak self] connectivity in
+            self?.updateConnectionStatus(connectivity.status)
+        }
+        connectivity.whenConnected = connectivityChanged
+        connectivity.whenDisconnected = connectivityChanged
+    }
+    
+    func performSingleConnectivityCheck() {
+        connectivity.checkConnectivity { connectivity in
+            self.updateConnectionStatus(connectivity.status)
+        }
+    }
+    
+    func startConnectivityChecks() {
+        connectivity.startNotifier()
+    }
+    
+    func stopConnectivityChecks() {
+        connectivity.stopNotifier()
+        connectivity.startNotifier()
+    }
+    
+    func updateConnectionStatus(_ status: Connectivity.Status) {
+        switch status {
+        case .connectedViaWiFi, .connectedViaCellular, .connected:
+            isNetworkEnable = true
+        case .connectedViaWiFiWithoutInternet, .connectedViaCellularWithoutInternet, .notConnected:
+            isNetworkEnable = false
+        }
+    }
 
 }
 
